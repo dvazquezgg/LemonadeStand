@@ -1,3 +1,3 @@
-Pedro, 100.00
-Maga, 100.00
-Nora, 100.00
+Pedro, 50.00
+Maga, 50.00
+Nora, 50.00

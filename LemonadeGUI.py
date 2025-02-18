@@ -64,17 +64,17 @@ class LemonadeStandApp:
         self.prices_label = tk.Label(self.prices_frame, text="Ingredient Prices", font=("Arial", PRICES_TITLE_SIZE, "bold"), bg="#FFFACD", fg="#32CD32")
         self.prices_label.grid(row=0, column=0, columnspan=3)
 
-        self.sugar_label = tk.Label(self.prices_frame, text="Sugar Price:", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
+        self.sugar_label = tk.Label(self.prices_frame, text="Sugar Price (tbsp):", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.sugar_label.grid(row=1, column=0)
         self.sugar_price = tk.Label(self.prices_frame, text="$0.00", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.sugar_price.grid(row=1, column=1, columnspan=2)
 
-        self.lemons_label = tk.Label(self.prices_frame, text="Lemons Price (kg):", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
+        self.lemons_label = tk.Label(self.prices_frame, text="Lemons Price (pc):", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.lemons_label.grid(row=2, column=0)
         self.lemons_price = tk.Label(self.prices_frame, text="$0.00", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.lemons_price.grid(row=2, column=1, columnspan=2)
 
-        self.cups_label = tk.Label(self.prices_frame, text="Cups Price:", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
+        self.cups_label = tk.Label(self.prices_frame, text="Cups Price (pc):", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.cups_label.grid(row=3, column=0)
         self.cups_price = tk.Label(self.prices_frame, text="$0.00", bg="#FFFACD", fg="#32CD32", font=("Arial", PRICES_LABEL_SIZE))
         self.cups_price.grid(row=3, column=1, columnspan=2)

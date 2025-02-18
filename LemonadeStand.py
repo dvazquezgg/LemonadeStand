@@ -96,7 +96,7 @@ class Player:
 
 
 class Game:
-    ingredient_prices = {'lemons': 1.5, 'sugar': 1.00, 'cups': 2.0}
+    ingredient_prices = {'lemons': 1.5, 'sugar': 1.00, 'cups': 2.00}
 
     def __init__(self, players, days):
         self.players = players
