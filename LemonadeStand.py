@@ -11,6 +11,8 @@ The goal is to make as much money as possible.
 '''
 
 import random
+from multiprocessing.reduction import recvfds
+
 
 class Player:
 
@@ -70,10 +72,16 @@ class Player:
     def make(self):
         # Make the maximum amount of lemonade possible with the ingredients
         # using the minimum of the ingredients according to the recipe
-        self.lemonade = min(self.lemons // self.recipe['lemons'], self.sugar // self.recipe['sugar'], self.cups // self.recipe['cups'])
-        self.lemons -= (self.lemonade * self.recipe['lemons'])
-        self.sugar -= (self.lemonade * self.recipe['sugar'])
-        self.cups -= self.lemonade
+        capacity = min(self.lemons // self.recipe['lemons'], self.sugar // self.recipe['sugar'], self.cups // self.recipe['cups'])
+        if capacity > self.lemonade: # If the capacity is greater than the current amount of required lemonade
+            self.lemons -= (self.lemonade * self.recipe['lemons'])
+            self.sugar -= (self.lemonade * self.recipe['sugar'])
+            self.cups -= self.lemonade
+        else: # If the capacity is less than the current amount of required lemonade
+            self.lemons -= (capacity * self.recipe['lemons'])
+            self.sugar -= (capacity * self.recipe['sugar'])
+            self.cups -= capacity
+            self.lemonade = capacity
 
     def set_price(self, price):
         self.price = price
@@ -84,11 +92,12 @@ class Player:
         cups_cost = self.recipe['cups'] * self.ingredient_prices['cups']
         return lemons_cost + sugar_cost + cups_cost
 
-    def sell(self, price, weather_pct):
+    def sell(self, price, weather_pct, factor, recipe):
+        pct_factor = weather_pct - (factor + recipe)
         # Sell the lemonade
-        possible_sales = int(self.lemonade * (weather_pct/100))
+        possible_sales = int(self.lemonade * (pct_factor/100))
         self.money += possible_sales * price
-        self.sales += self.lemonade
+        self.sales += possible_sales
         self.lemonade = self.lemonade - possible_sales
 
     def __str__(self):
@@ -103,6 +112,8 @@ class Game:
         self.days = days
         self.price = 1.00
         self.weather = ('sunny', 80)
+        self.lemonade_prices = []
+        self.lemonade_recipe = []
 
     def get_random_weather(self):
         return random.choice([('Sunny', 100), ('Cloudy', 80), ('Rainy', 50), ('Windy', 25), ('Stormy', 10)])
@@ -128,6 +139,18 @@ class Game:
     def enter_number_of_days(self):
         days = int(input('Enter the number of days: '))
         self.days = days
+
+    def order_lemonade_prices(self):
+        self.lemonade_prices = []  #clear the list
+        for player in self.players:
+            self.lemonade_prices.append((player, player.price));
+        self.lemonade_prices.sort(key=lambda x: x[1]) #sort the list by price
+
+    def order_lemonade_recipe(self):
+        self.lemonade_recipe = []
+        for player in self.players:
+            self.lemonade_recipe.append((player, player.recipe['lemons'] / player.recipe['sugar']))
+        self.lemonade_recipe.sort(key=lambda x: x[1])
 
     def updating_prices(self):
         # Update the prices of the ingredients
@@ -182,9 +205,14 @@ class Game:
         self.print_players_table()
         print()
 
+        self.order_lemonade_prices()
+        self.order_lemonade_recipe()
         for player in self.players:
             print(f'{player.name}\'s turn. Selling lemonade')
-            player.sell(self.price, self.weather[1])
+            # find the player place in lemonade_prices, that is the factor
+            factor = next((i for i, (first, second) in enumerate(self.lemonade_prices) if first == player), -1)
+            recipe = next((i for i, (first, second) in enumerate(self.lemonade_recipe) if first == player), -1)
+            player.sell(self.price, self.weather[1], factor, recipe)
 
         print()
         print(f'The weather was {self.weather[0]} and the percentage was {self.weather[1]}')
@@ -192,7 +220,7 @@ class Game:
         print()
 
         print('Finishing the day')
-        # elf.updating_prices()
+        # self.updating_prices()
         for player in self.players:
             player.lemonade = 0
 

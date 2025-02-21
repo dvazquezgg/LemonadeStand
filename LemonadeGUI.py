@@ -22,9 +22,11 @@ lemonade_data = [
                     ["Charlie", 10, 4, "$3.50", 20]
                 ] + [["", "", "", "", ""] for _ in range(17)]
 
-MAIN_TITLE_SIZE = 18
-PRICES_TITLE_SIZE = 16
-PRICES_LABEL_SIZE = 14
+MAIN_TITLE_SIZE = 24
+PRICES_TITLE_SIZE = 20
+PRICES_LABEL_SIZE = 20
+TABLE_HEADER_SIZE = 20
+TABLE_CONTENT_SIZE = 20
 
 class LemonadeStandApp:
     def __init__(self, root, Game):
@@ -32,17 +34,18 @@ class LemonadeStandApp:
         self.day = 0
         self.root = root
         self.root.title("Lemonade Stand")
+        self.root.geometry("1280x800")  # 1280 pixels wide, 800 pixels tall
         self.root.configure(bg="#FFFACD")  # Lemon Yellow Background
 
         # Title Label
         self.title_label = tk.Label(root, text="Lemonade Stand", font=("Arial", MAIN_TITLE_SIZE, "bold"), bg="#FFFACD", fg="#32CD32")  # Lemon Green Text
-        self.title_label.grid(row=0, column=0, columnspan=6, pady=10)
+        self.title_label.grid(row=0, column=0, columnspan=1, pady=10)
 
         # Weather Frame
         self.weather_frame = tk.Frame(root, bg="#FFFACD")
         self.weather_frame.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
-        self.weather_label = tk.Label(self.weather_frame, text="Weather:", bg="#FFFACD", fg="#32CD32")
+        self.weather_label = tk.Label(self.weather_frame, text="Weather:", font=("Arial", PRICES_TITLE_SIZE, "bold"), bg="#FFFACD", fg="#32CD32")
         self.weather_label.pack()
 
         #self.weather = random.choice(list(weather_images.keys()))
@@ -56,7 +59,7 @@ class LemonadeStandApp:
 
         # Ingredient Prices Table
         self.prices_frame = tk.Frame(root, bg="#FFFACD")
-        self.prices_frame.grid(row=1, column=1, columnspan=3, pady=10)
+        self.prices_frame.grid(row=1, column=1, columnspan=1, pady=10, sticky="ew")
 
         self.prices_label = tk.Label(self.prices_frame, text=f"Day {self.day}", font=("Arial", PRICES_TITLE_SIZE, "bold"), bg="#FFFACD", fg="#32CD32")
         self.prices_label.grid(row=0, column=0, columnspan=3)
@@ -82,15 +85,21 @@ class LemonadeStandApp:
         self.update_prices()
 
         # Lemonade Stand Table
+        # Create a style
+        style = ttk.Style()
+        style.configure("Treeview", font=("Arial", TABLE_CONTENT_SIZE))  # Adjusts the font for table content
+        style.configure("Treeview.Heading", font=("Arial", TABLE_HEADER_SIZE, "bold"))  # Adjusts the font for headers
+
         self.tree = ttk.Treeview(root, columns=("Name", "Money","Lemons", "Sugar", "Price", "Lemonades"), show="headings",
-                                 height=20)
-        self.tree.grid(row=2, column=0, columnspan=6, pady=10)
+                                 height=24)
 
         for col in ["Name", "Money", "Lemons", "Sugar", "Price", "Lemonades"]:
             self.tree.heading(col, text=col)
-            self.tree.column(col, width=100, anchor="center")
+            self.tree.column(col, width=150, anchor="center")
 
         self.set_table_data()
+
+        self.tree.grid(row=2, column=0, columnspan=6, pady=10, sticky="nsew")
 
         # Buttons
         self.buttons_frame = tk.Frame(root, bg="#FFFACD")
@@ -104,13 +113,16 @@ class LemonadeStandApp:
                                        fg="black")
         self.change_button.pack(side="left", padx=5)
 
-        self.next_button = tk.Button(self.buttons_frame, text="Next Day", command=self.update_prices, bg="#32CD32", fg="black")
+        self.next_button = tk.Button(self.buttons_frame, text="Next Day", command=self.next_day, bg="#32CD32", fg="black")
         self.next_button.pack(side="left", padx=5)
 
         self.restart_button = tk.Button(self.buttons_frame, text="Restart", command=self.restart, bg="#32CD32",
                                         fg="black")
         self.restart_button.pack(side="left", padx=5)
 
+        # Make Treeview expand properly
+        self.root.grid_rowconfigure(2, weight=1)  # Allows row to expand
+        self.root.grid_columnconfigure(0, weight=1)  # Allows column to expand
 
     def set_table_data(self):
         # Clear the table
@@ -120,6 +132,59 @@ class LemonadeStandApp:
         for player in self.game.players:
             row = [player.name, player.money, player.recipe['lemons'], player.recipe['sugar'], player.price, player.lemonade]
             self.tree.insert("", "end", values=row)
+
+    def next_day(self):
+        self.day += 1
+        self.prices_label.config(text=f"Day {self.day}")
+        self.change_weather()
+        self.game.simulate_day(self.day) # Simulate the day with selling lemonades
+        self.show_results()
+        self.game.updating_prices()
+        prices = self.game.get_current_prices()
+        self.sugar_price.config(text=f"${prices['sugar']:.2f}")
+        self.lemons_price.config(text=f"${prices['lemons']:.2f}")
+        self.cups_price.config(text=f"${prices['cups']:.2f}")
+        self.set_table_data()
+
+    def show_results(self):
+        # Create the modal window
+        modal = tk.Toplevel(root)
+        modal.title("Results for the day")
+        modal.geometry("800x600")
+        modal.resizable(False, False)  # Prevent resizing
+
+        # Block interactions with the main window
+        modal.grab_set()
+
+        # Weather Label
+        weather_message = f'The weather was {self.game.weather[0]} and the percentage was {self.game.weather[1]}'
+        tk.Label(modal, text=weather_message, font=("Arial", PRICES_TITLE_SIZE)).pack(pady=5)
+
+        # Create a Frame for Treeview to add padding
+        frame = tk.Frame(modal)
+        frame.pack(pady=5)
+
+        # Create Treeview
+        columns = ("Player", "Money", "Lemons", "Sugar", "Cups", "Lemonade", "Sales")
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=20)
+
+        # Define column headings
+        for col in columns:
+            tree.heading(col, text=col)
+            tree.column(col, width=80, anchor="center")  # Adjust width as needed
+
+        # Insert Data
+        for player in self.game.players:
+            row = [player.name, player.money, player.lemons, player.sugar, player.cups, player.lemonade, player.sales]
+            tree.insert("", "end", values=row)
+
+        # Add Treeview to Frame
+        tree.pack()
+
+        # OK Button to Close Modal
+        ok_button = tk.Button(modal, text="OK", command=modal.destroy)
+        ok_button.pack(pady=10)
+
 
     def change_weather(self):
         self.weather = self.game.get_random_weather()
